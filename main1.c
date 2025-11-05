@@ -1,11 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define MAX_STRING 50
+#define Tam_max 50
+
+// Criando a Struct Aluno fora da main para ser usada globalmente (boa pr√°tica)
+typedef struct {
+    char nome[Tam_max];
+    char ra[10];
+    char turma[Tam_max];
+    float nota1;
+    float nota2;
+    float media;
+} Aluno;
+
 
 int contar_linhas_arquivo(const char *nome_arquivo) {
     FILE *arquivo;
-    int contador_linhas = 1;
+    int contador_linhas = 1;// 1 porque ele come√ßa na primeira linha, e vira 2 quando le a primeira quebra de linha
     int caractere;
 
     //Abrir o arquivo no modo de leitura ("r")
@@ -13,13 +24,10 @@ int contar_linhas_arquivo(const char *nome_arquivo) {
 
     //Verificar se o arquivo foi aberto com sucesso
     if (arquivo == NULL) {
-        // Imprime uma mensagem de erro
-        perror("Erro ao abrir o arquivo"); 
-        // Retorna -1 para indicar falha
         return -1; 
     }
 	
-    //Ler o arquivo caractere por caractere atÈ o final (EOF)
+    //Ler o arquivo caractere por caractere at√© o final (EOF)
     while ((caractere = fgetc(arquivo)) != EOF) {
         // Se o caractere lido for uma quebra de linha, incrementa o contador
         if (caractere == '\n') {
@@ -33,117 +41,135 @@ int contar_linhas_arquivo(const char *nome_arquivo) {
 	}
 
 float calcular_media(float n1, float n2)
- {
+{
     return (n1 + n2) / 2.0;
 }
+
+
+int processar_arquivo_disciplina(const char *nome_arquivo, const char *nome_disciplina) {
+    FILE *arquivo;
+    // Tenta obter o n√∫mero de linhas.
+    int linhas = contar_linhas_arquivo(nome_arquivo);
+    
+    // Se cada aluno ocupa 4 linhas entao linhas / 4 = quantidade de alunos
+    int num_alunos = linhas / 4;
+    
+    // Verifi√ßao pra garantir de novo
+    if (linhas == -1) {
+        return 1;
+    }
+    if (linhas % 4 != 0) {
+        fprintf(stderr, "Aviso: O arquivo %s esta incompleto \n", nome_arquivo);
+        return -1;
+    }
+    if (num_alunos == 0) {
+        printf("Nenhum aluno encontrado no arquivo %s.\n", nome_arquivo);
+        return 0; // nao √© um erro, mas nao tem o que ler, roda normal
+    }
+
+
+    // le o arquivo, e verifica se ele existe
+    arquivo = fopen(nome_arquivo, "r");
+    if (arquivo == NULL) {
+    fprintf(stderr, "Erro: arquivo \"%s\" nao encontrado.\n", nome_arquivo); 
+    return 1;
+    }
+    
+	//vai criar uma instancia de aluno para cada 4 linhas do txt
+    Aluno alunos[num_alunos];
+    int i = 0; // Contador de alunos
+
+    printf("\n=== DADOS DA DISCIPLINA: %s ===\n", nome_disciplina);
+    
+    //loop para ler os dados dos alunos, at√© o contador ser maior que a quantidade de alunos
+    while (i < num_alunos) {
+
+        if (fgets(alunos[i].nome, Tam_max, arquivo) == NULL) break;
+        alunos[i].nome[strcspn(alunos[i].nome, "\n")] = '\0';
+
+        if (fgets(alunos[i].ra, 10, arquivo) == NULL) break;
+        alunos[i].ra[strcspn(alunos[i].ra, "\n")] = '\0';
+        
+        if (fgets(alunos[i].turma, Tam_max, arquivo) == NULL) break;
+        alunos[i].turma[strcspn(alunos[i].turma, "\n")] = '\0';
+
+        // O espa√ßo ap√≥s o segundo %f √© necessario se nao da erro
+        
+        if (fscanf(arquivo, "%f %f ", &alunos[i].nota1, &alunos[i].nota2) != 2) break;
+        
+		// calculando a media esta aqui
+        alunos[i].media = calcular_media(alunos[i].nota1, alunos[i].nota2);
+        
+        // Exibe os dados do aluno
+        printf("--------------------------------------------------\n");
+        printf("Nome: %s\n", alunos[i].nome);
+        printf("RA: %s\n", alunos[i].ra);
+        printf("Turma: %s\n", alunos[i].turma);
+        printf("Nota 1: %.2f\n", alunos[i].nota1);
+        printf("Nota 2: %.2f\n", alunos[i].nota2);
+        printf("M√©dia: %.2f\n", alunos[i].media);
+        printf("--------------------------------------------------\n");
+        
+        i++; // aumenta o contador e vai para o pr√≥ximo aluno
+    }
+    
+    if (i < num_alunos) {
+        printf("Erro na condicao do while");
+        return 1;
+    }
+
+    fclose(arquivo);
+    return 0; // Retorna sucesso
+}
+
 int main() {
-	FILE *arquivo; 
-	
-		//criando uma Struct para aluno
-		typedef	struct  {
-		char nome[MAX_STRING];
-	    char ra[10];   //precisamos de 2 char a mais para evitar erros     
-	    char turma[MAX_STRING];
-	    float nota1;
-	    float nota2;
-	    float media;
-					} Aluno ;
-	
-	
-	
-    while (1==1) 
-	{
+
+    while (1) {
         printf("\n=== MENU PRINCIPAL ===\n");
-        printf("[1] portugues.txt\n");
-        printf("[2] matematica.txt\n");
-        printf("[3] historia.txt\n");
-        printf("[4] ciencias.txt\n");
+        printf("[1] Portugues\n");
+        printf("[2] Matematica\n");
+        printf("[3] Historia\n");
+        printf("[4] Ciencias\n");
         printf("[5] Sair\n");
         printf("Selecione uma opcao: ");
         
+        int op = 0;
+        // Verifica e limpa o buffer
+        if (scanf("%d", &op) != 1) {
+             printf("Entrada invalida. Por favor, digite um numero.\n");
+             while (getchar() != '\n');
+             continue;
+        }
         
-		//portuguÍs,matematica,historia,ciencias
-		
-		
-		
-		int op=0; //criando a variavel opÁ„o para o switch
-        scanf("%d",&op);// pedindo a opÁ„o para o usuario
-
         switch (op) {
-        	case 1:
-                printf("portugues\n");
-				
-				
-					
+            case 1:
+                processar_arquivo_disciplina("portugues.txt", "Portugues");
                 break;
-        	
+                
             case 2:
-              ;
-			    Aluno aluno_mat[MAX_STRING];//vetor de structs para armazenar varios alunos
-			    int i=0;// contador para percorrer vetor de structs
-			    int linhas = contar_linhas_arquivo("matematica.txt");//saber quantas linhas, se dividir por 4 e for diferente de zero tem algo errado, 4 linhas = 1 aluno
-                //printf("%d",linhas);
-                
-			
-                
-                arquivo = fopen("matematica.txt", "r");// arquivo agora aponta pra o txt que queremos
-                if (arquivo == NULL) {
-                    perror("Erro ao abrir o arquivo matematica.txt"); 
-                
-                    break; // Sai do 'case 2' se o arquivo n„o puder ser aberto
-					}
-                
-                
-		while (linhas !=0){
-		
-		fgets(aluno_mat[i].nome, MAX_STRING, arquivo);
-		aluno_mat[i].nome[strcspn(aluno_mat[i].nome, "\n")] = '\0';
-		         
-		fgets(aluno_mat[i].ra, 10, arquivo);
-		aluno_mat[i].ra[strcspn(aluno_mat[i].ra, "\n")] = '\0';
-		
-		         
-		fgets(aluno_mat[i].turma, MAX_STRING, arquivo);
-		aluno_mat[i].turma[strcspn(aluno_mat[i].turma, "\n")] = '\0';
-		         
-		fscanf(arquivo, "%f %f ", &aluno_mat[i].nota1, &aluno_mat[i].nota2);
-		
-		aluno_mat[i].media = calcular_media(aluno_mat[i].nota1, aluno_mat[i].nota2);
-		         
-		printf("DISCIPLINA: Matematica");
-		printf("--------------------------------------------------\n");
-		printf("Nome: %s\n", aluno_mat[i].nome);
-		printf("RA: %s\n", aluno_mat[i].ra);
-		printf("Turma: %s\n", aluno_mat[i].turma);
-		printf("Nota 1: %.2f\n", aluno_mat[i].nota1);
-		printf("Nota 2: %.2f\n", aluno_mat[i].nota2);
-		printf("MÈdia: %.2f\n", aluno_mat[i].media);
-		printf("--------------------------------------------------\n");
-		linhas = linhas-4;// se o arquivo tem 12 linhas, 4 delas formam uma struct, e entao comeÁa a proxima iteraÁao
-		i= i+1;// aumenta o contador para percorrer o vetor de structs
-		}
-		
-		fclose(arquivo);
-                
-                
-                
-				break;
+
+                processar_arquivo_disciplina("matematica.txt", "Matematica");
+                break;
                 
             case 3:
-                printf("programac...\n");
+
+                processar_arquivo_disciplina("historia.txt", "Historia");
                 break;
+                
             case 4:
-                printf("programac...\n");
+
+                processar_arquivo_disciplina("ciencias.txt", "Ciencias");
                 break;
+                
             case 5:
                 printf("Encerrando...\n");
                 return 0;
+                
             default:
                 printf("Opcao invalida. Tente novamente.\n");
-                continue;
+                break;
         }
-
-     
     }
+    
     return 0;
 }
