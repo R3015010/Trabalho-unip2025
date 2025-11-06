@@ -13,7 +13,6 @@ typedef struct {
     float media;
 } Aluno;
 
-
 int contar_linhas_arquivo(const char *nome_arquivo) {
     FILE *arquivo;
     int contador_linhas = 1;// 1 porque ele começa na primeira linha, e vira 2 quando le a primeira quebra de linha
@@ -54,16 +53,17 @@ int processar_arquivo_disciplina(const char *nome_arquivo, const char *nome_disc
     // Se cada aluno ocupa 4 linhas entao linhas / 4 = quantidade de alunos
     int num_alunos = linhas / 4;
     
-    // Verifiçao pra garantir de novo
-    if (linhas == -1) {
-        return 1;
-    }
+    // Verifiçao caso linhas receba valor negativo
+    if (linhas <= -1) 
+	{
+        fprintf(stderr,"Erro linhas negativas");
+	}
     if (linhas % 4 != 0) {
-        fprintf(stderr, "Aviso: O arquivo %s esta incompleto \n", nome_arquivo);
+        fprintf(stderr, "\nAviso: O arquivo %s esta incompleto ou nao existe \n", nome_arquivo);
         return -1;
     }
     if (num_alunos == 0) {
-        printf("Nenhum aluno encontrado no arquivo %s.\n", nome_arquivo);
+        printf("\nNenhum aluno encontrado no arquivo %s.\n", nome_arquivo);
         return 0; // nao é um erro, mas nao tem o que ler, roda normal
     }
 
@@ -114,12 +114,68 @@ int processar_arquivo_disciplina(const char *nome_arquivo, const char *nome_disc
     }
     
     if (i < num_alunos) {
-        printf("Erro na condicao do while");
+        printf("Erro na condicao do while");//garante que nao saiu do loop sem ler todos alunos
         return 1;
     }
 
     fclose(arquivo);
     return 0; // Retorna sucesso
+}
+
+void busca_ra(const char *nome_arquivo)
+{
+FILE *arquivo;
+    // Tenta obter o número de linhas.
+    int linhas = contar_linhas_arquivo(nome_arquivo);
+    
+    // Se cada aluno ocupa 4 linhas entao linhas / 4 = quantidade de alunos
+    int num_alunos = linhas / 4;
+    char ra2[10];//declara o ra que vamos buscar
+    scanf("%9s", ra2);
+    while (getchar() != '\n');
+
+    arquivo = fopen(nome_arquivo, "r");
+
+	//vai criar uma instancia de aluno para cada 4 linhas do txt
+    Aluno alunos[num_alunos];
+    int i = 0,encontrou=0; // Contador de alunos, verificador se encontrou
+
+
+    
+    //loop para ler os dados dos alunos, até o contador ser maior que a quantidade de alunos
+    while (i < num_alunos) {
+
+        if (fgets(alunos[i].nome, Tam_max, arquivo) == NULL) break;
+        alunos[i].nome[strcspn(alunos[i].nome, "\n")] = '\0';
+
+        if (fgets(alunos[i].ra, 10, arquivo) == NULL) break;
+        alunos[i].ra[strcspn(alunos[i].ra, "\n")] = '\0';
+        
+        if (fgets(alunos[i].turma, Tam_max, arquivo) == NULL) break;
+        alunos[i].turma[strcspn(alunos[i].turma, "\n")] = '\0';
+
+        // O espaço após o segundo %f é necessario se nao da erro
+        
+        if (fscanf(arquivo, "%f %f ", &alunos[i].nota1, &alunos[i].nota2) != 2) break;
+        
+		// calculando a media esta aqui
+        alunos[i].media = calcular_media(alunos[i].nota1, alunos[i].nota2);
+        
+        if (strcmp(ra2, alunos[i].ra) == 0){
+		
+        	printf("\nEsse RA pertence ao aluno(a) %s",alunos[i].nome);
+        	encontrou = 1;
+        	break;
+ 		 }
+      
+        
+        i++; // aumenta o contador e vai para o próximo aluno
+    }
+    if (encontrou == 0)
+    printf("\nNao foi encontrato nenhum aluno com esse RA");
+    
+
+    fclose(arquivo);
 }
 
 int main() {
@@ -130,10 +186,11 @@ int main() {
         printf("[2] Matematica\n");
         printf("[3] Historia\n");
         printf("[4] Ciencias\n");
-        printf("[5] Sair\n");
+        printf("[5] Busca por RA\n");
+        printf("[6] Sair\n");
         printf("Selecione uma opcao: ");
         
-        int op = 0;
+        int op = 0,op2 = 0;
         // Verifica e limpa o buffer
         if (scanf("%d", &op) != 1) {
              printf("Entrada invalida. Por favor, digite um numero.\n");
@@ -162,11 +219,44 @@ int main() {
                 break;
                 
             case 5:
+            			printf("Qual a disciplina do aluno?\n");
+            	        printf("[1] Portugues\n");
+				        printf("[2] Matematica\n");
+				        printf("[3] Historia\n");
+				        printf("[4] Ciencias\n");
+				       if (scanf("%d", &op2) != 1) {
+             printf("Entrada invalida. Por favor, digite um numero.\n");
+             while (getchar() != '\n');
+             continue;
+        }
+            	switch(op2)
+				{
+	            	case 1:
+	            		busca_ra("portugues.txt");
+	            		break;
+					case 2:
+						busca_ra("matematica.txt");
+	            		break;
+					case 3:
+						busca_ra("historia.txt");
+	            		break;
+					case 4:
+						busca_ra("ciencias.txt");
+	            		break;
+	            		default:
+                printf("Opcao invalida. Escreva um valor de 1 a 4.\n");
+                break;
+				}
+               
+			   
+			    break;
+            
+			case 6:
                 printf("Encerrando...\n");
                 return 0;
                 
             default:
-                printf("Opcao invalida. Tente novamente.\n");
+                printf("Opcao invalida. Escreva um valor de 1 a 6.\n");
                 break;
         }
     }
