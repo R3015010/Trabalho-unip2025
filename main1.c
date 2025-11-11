@@ -50,17 +50,20 @@ int processar_arquivo_disciplina(const char *nome_arquivo, const char *nome_disc
     // Tenta obter o número de linhas.
     int linhas = contar_linhas_arquivo(nome_arquivo);
     
+    
     // Se cada aluno ocupa 4 linhas entao linhas / 4 = quantidade de alunos
     int num_alunos = linhas / 4;
+    
     
     // Verifiçao caso linhas receba valor negativo
     if (linhas <= -1) 
 	{
         fprintf(stderr,"Erro linhas negativas");
 	}
-    if (linhas % 4 != 0) {
-        fprintf(stderr, "\nAviso: O arquivo %s esta incompleto ou nao existe \n", nome_arquivo);
-        return -1;
+	//linhas possui um ultimo /n aumentando o contador em 1, portando seus valores sempre sao 5,9,13...
+    if (linhas % 4 != 1) {
+       fprintf(stderr, "\nAviso: O arquivo %s esta incompleto ou nao existe \n", nome_arquivo);
+       return -1;
     }
     if (num_alunos == 0) {
         printf("\nNenhum aluno encontrado no arquivo %s.\n", nome_arquivo);
@@ -125,6 +128,7 @@ int processar_arquivo_disciplina(const char *nome_arquivo, const char *nome_disc
 void busca_ra(const char *nome_arquivo)
 {
 FILE *arquivo;
+	printf("digite o RA do aluno");
     // Tenta obter o número de linhas.
     int linhas = contar_linhas_arquivo(nome_arquivo);
     
@@ -243,7 +247,8 @@ int main() {
 					case 4:
 						busca_ra("ciencias.txt");
 	            		break;
-	            		default:
+	            		
+	            	default:
                 printf("Opcao invalida. Escreva um valor de 1 a 4.\n");
                 break;
 				}
